@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Api
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (..)
@@ -11,10 +12,10 @@ import Page.Settings as Settings
 import Route exposing (Route)
 import Session exposing (Session)
 import Url exposing (Url)
-import User exposing (User)
 
 
 
+--import Viewer exposing (Viewer)
 {- Sample of basic navigation in Elm.
 
    The first argument is currently empty until we decode the flags from Json.Value
@@ -61,19 +62,19 @@ type AppMsg
 init : () -> Url -> Nav.Key -> ( AppModel, Cmd AppMsg )
 init _ url navKey =
     changeRouteTo (Route.fromUrl url)
-        (Redirect (Session.fromUser navKey Nothing))
+        (Redirect (Session.fromViewer navKey Nothing))
 
 
 view : AppModel -> Document AppMsg
 view model =
     let
-        user =
-            Session.user (toSession model)
+        viewer =
+            Session.viewer (toSession model)
 
         viewPage page toMsg config =
             let
                 { title, body } =
-                    Page.view user page config
+                    Page.view viewer page config
             in
             { title = title
             , body = List.map (Html.map toMsg) body
@@ -81,10 +82,10 @@ view model =
     in
     case Debug.log "view" model of
         Redirect _ ->
-            Page.view user Page.Other NotFound.view
+            Page.view viewer Page.Other NotFound.view
 
         NotFound _ ->
-            Page.view user Page.Other NotFound.view
+            Page.view viewer Page.Other NotFound.view
 
         Home home ->
             viewPage Page.Home GoToHome (Home.view home)
@@ -98,7 +99,7 @@ view model =
 
 update : AppMsg -> AppModel -> ( AppModel, Cmd AppMsg )
 update msg model =
-    case Debug.log "update" ( msg, model ) of
+    case Debug.log "Main.update" ( msg, model ) of
         ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
@@ -149,7 +150,21 @@ updateWith toModel toMsg ( subModel, subCmd ) =
 
 subscriptions : AppModel -> Sub AppMsg
 subscriptions model =
-    Sub.none
+    case Debug.log "Main.subscriptions" model of
+        NotFound _ ->
+            Sub.none
+
+        Redirect _ ->
+            Session.changes GotSession (Session.navKey (toSession model))
+
+        Home home ->
+            Sub.map GoToHome (Home.subscriptions home)
+
+        Login login ->
+            Sub.map GoToLogin (Login.subscriptions login)
+
+        Settings settings ->
+            Sub.map GoToSettings (Settings.subscriptions settings)
 
 
 
@@ -202,12 +217,7 @@ changeRouteTo maybeRoute model =
                 |> updateWith Settings GoToSettings
 
         Just Route.Logout ->
-            ( model, logout )
+            ( model, Api.logout )
 
         Nothing ->
             ( NotFound session, Cmd.none )
-
-
-logout : Cmd msg
-logout =
-    Cmd.none

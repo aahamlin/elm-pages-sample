@@ -1,36 +1,85 @@
 module Page.Login exposing (..)
 
-import Html exposing (Html, div, text)
+import Api exposing (Credential)
+import Html exposing (Html, br, button, div, text)
+import Html.Events exposing (onClick)
+import Route exposing (Route)
 import Session exposing (Session)
+import Task exposing (Task)
+import Viewer exposing (Viewer(..))
 
 
 type alias Model =
     { session : Session
+    , problems : String
     }
 
 
 init : Session -> ( Model, Cmd Msg )
 init session =
     ( { session = session
+      , problems = ""
       }
     , Cmd.none
     )
 
 
 type Msg
-    = GotSession Session
+    = DoLogin
+    | CompletedLogin (Result String Viewer)
+    | GotSession Session
 
 
-view : Model -> { title : String, content : Html msg }
+view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Login"
     , content =
-        div [] [ text "Login content" ]
+        div []
+            [ div [] [ text "Login content" ]
+            , br [] []
+            , button
+                [ onClick DoLogin ]
+                [ text "Login" ]
+            ]
     }
+
+
+fakeLogin : String -> Task x (Result String Viewer)
+fakeLogin usernameVal =
+    let
+        cred =
+            Api.login usernameVal
+    in
+    Ok (Viewer cred)
+        |> Task.succeed
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model ) of
-        ( GotSession session, _ ) ->
-            ( { model | session = session }, Cmd.none )
+    case Debug.log "Login.update" msg of
+        DoLogin ->
+            ( model
+              -- elm/task seems to be the necessary magic to fake a login
+              --Api.login CompletedLogin "bob"
+            , Task.perform CompletedLogin (fakeLogin "bob")
+            )
+
+        CompletedLogin (Err err) ->
+            ( { model | problems = err }
+            , Cmd.none
+            )
+
+        CompletedLogin (Ok viewer) ->
+            ( model
+            , Viewer.store viewer
+            )
+
+        GotSession session ->
+            ( { model | session = session }
+            , Route.replaceUrl (Session.navKey session) Route.Home
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Session.changes GotSession (Session.navKey model.session)

@@ -34,3 +34,8 @@ update msg model =
     case ( msg, model ) of
         ( GotSession session, _ ) ->
             ( { model | session = session }, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Session.changes GotSession (Session.navKey model.session)
