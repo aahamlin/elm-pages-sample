@@ -1,7 +1,7 @@
 module Page.Settings exposing (..)
 
 import Html exposing (Html, div, text)
-import Route exposing (Route)
+import Route exposing (Route(..))
 import Session exposing (Session)
 
 
@@ -10,12 +10,35 @@ type alias Model =
     }
 
 
+
+{- Initialize the Settings page.
+
+   This is a protected resource. An unauthenticated user cannot see it.
+   Just one of many options on how to handle this case. Could benefit
+   from a warning message, such as problems field in the model to display
+   on the Home page -or- just display a message during Settings.view
+
+-}
+
+
 init : Session -> ( Model, Cmd Msg )
 init session =
-    ( { session = session
-      }
-    , Cmd.none
-    )
+    let
+        maybeViewer =
+            Session.viewer session
+    in
+    case maybeViewer of
+        Just _ ->
+            ( { session = session
+              }
+            , Cmd.none
+            )
+
+        Nothing ->
+            ( { session = session
+              }
+            , Route.replaceUrl (Session.navKey session) Route.Home
+            )
 
 
 type Msg

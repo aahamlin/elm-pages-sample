@@ -12,6 +12,7 @@ fromUrl =
     describe "Route.fromUrl"
         [ testUrl "" Home
         , testUrl "login" Login
+        , testUrl "logout" Logout
         , testUrl "settings" Settings
         , testNotFoundUrl "abcefghijklmnop"
         ]

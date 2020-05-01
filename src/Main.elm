@@ -150,7 +150,7 @@ updateWith toModel toMsg ( subModel, subCmd ) =
 
 subscriptions : AppModel -> Sub AppMsg
 subscriptions model =
-    case Debug.log "Main.subscriptions" model of
+    case Debug.log "Main.sub" model of
         NotFound _ ->
             Sub.none
 

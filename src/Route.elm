@@ -17,6 +17,10 @@ type Route
 
 parser : Parser (Route -> a) a
 parser =
+    {- Parse all known routes.
+
+       This requires a unit test for completeness.
+    -}
     oneOf
         [ Parser.map Home Parser.top
         , Parser.map Login (s "login")
