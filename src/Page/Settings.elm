@@ -1,6 +1,7 @@
 module Page.Settings exposing (..)
 
 import Html exposing (Html, div, text)
+import Route exposing (Route)
 import Session exposing (Session)
 
 
@@ -31,9 +32,11 @@ view model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model ) of
+    case Debug.log "Settings.update" ( msg, model ) of
         ( GotSession session, _ ) ->
-            ( { model | session = session }, Cmd.none )
+            ( { model | session = session }
+            , Route.replaceUrl (Session.navKey session) Route.Home
+            )
 
 
 subscriptions : Model -> Sub Msg

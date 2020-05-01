@@ -76,6 +76,7 @@ update msg model =
 
         GotSession session ->
             ( { model | session = session }
+              -- every subpage that should redirect to home when sessions change
             , Route.replaceUrl (Session.navKey session) Route.Home
             )
 

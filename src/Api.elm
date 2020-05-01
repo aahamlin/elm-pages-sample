@@ -63,30 +63,28 @@ login name =
         tokens
 
 
-encodeCredential : Credential -> Value
-encodeCredential (Credential uname tokens) =
-    Encode.object
-        [ ( "user"
-          , Encode.object
-                [ ( "username", Username.encode uname )
-                , ( "tokens", Tokens.encode tokens )
-                ]
-          )
-        ]
-
-
 storeCredential : Credential -> Cmd msg
-storeCredential credential =
-    Just (encodeCredential credential)
-        |> storeCache
-
-
-port storeCache : Maybe Value -> Cmd msg
+storeCredential (Credential uname tokens) =
+    let
+        json =
+            Encode.object
+                [ ( "user"
+                  , Encode.object
+                        [ ( "username", Username.encode uname )
+                        , ( "tokens", Tokens.encode tokens )
+                        ]
+                  )
+                ]
+    in
+    storeCache (Just json)
 
 
 logout : Cmd msg
 logout =
-    storeCache Nothing
+    Debug.log "logout" storeCache Nothing
+
+
+port storeCache : Maybe Value -> Cmd msg
 
 
 storageDecoder : Decoder (Credential -> viewer) -> Decoder viewer

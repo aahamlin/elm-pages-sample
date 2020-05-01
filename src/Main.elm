@@ -196,7 +196,7 @@ changeRouteTo maybeRoute model =
         session =
             toSession model
     in
-    case maybeRoute of
+    case Debug.log "changeRouteTo" maybeRoute of
         Just Route.Root ->
             ( model
             , Route.replaceUrl

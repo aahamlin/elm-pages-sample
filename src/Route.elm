@@ -20,7 +20,7 @@ parser =
     oneOf
         [ Parser.map Home Parser.top
         , Parser.map Login (s "login")
-        , Parser.map Login (s "logout")
+        , Parser.map Logout (s "logout")
         , Parser.map Settings (s "settings")
         ]
 
