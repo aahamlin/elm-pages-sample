@@ -2,6 +2,7 @@ module Page.Home exposing (..)
 
 import Html exposing (Html, div, h1, p, text)
 import Html.Attributes exposing (class)
+import Route exposing (Route)
 import Session exposing (Session)
 
 
@@ -33,22 +34,13 @@ view model =
     }
 
 
-
--- viewBanner : Html msg
--- viewBanner =
---     div [ class "jumbotron" ]
---         [ div [ class "container" ]
---             [ h1 [ class "display-4" ] [ text "Pages" ]
---             , p [ class "lead" ] [ text "sample page navigation in elm" ]
---             ]
---         ]
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model ) of
         ( GotSession session, _ ) ->
-            ( { model | session = session }, Cmd.none )
+            ( { model | session = session }
+            , Route.replaceUrl (Session.navKey session) Route.Home
+            )
 
 
 subscriptions : Model -> Sub Msg

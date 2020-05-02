@@ -4,6 +4,7 @@ import Api
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (..)
+import Json.Decode exposing (Value)
 import Page exposing (Page)
 import Page.Home as Home
 import Page.Login as Login
@@ -12,6 +13,7 @@ import Page.Settings as Settings
 import Route exposing (Route)
 import Session exposing (Session)
 import Url exposing (Url)
+import Viewer exposing (Viewer)
 
 
 
@@ -22,9 +24,9 @@ import Url exposing (Url)
 -}
 
 
-main : Program () AppModel AppMsg
+main : Program Value AppModel AppMsg
 main =
-    Browser.application
+    Api.application Viewer.decoder
         { init = init
         , view = view
         , update = update
@@ -59,10 +61,10 @@ type AppMsg
 -- first argument to init will be Value and then Maybe User
 
 
-init : () -> Url -> Nav.Key -> ( AppModel, Cmd AppMsg )
-init _ url navKey =
+init : Maybe Viewer -> Url -> Nav.Key -> ( AppModel, Cmd AppMsg )
+init maybeViewer url navKey =
     changeRouteTo (Route.fromUrl url)
-        (Redirect (Session.fromViewer navKey Nothing))
+        (Redirect (Session.fromViewer navKey maybeViewer))
 
 
 view : AppModel -> Document AppMsg

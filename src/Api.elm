@@ -1,4 +1,4 @@
-port module Api exposing (Credential(..), login, logout, storeCredential, username, viewerChanges)
+port module Api exposing (Credential(..), application, login, logout, storeCredential, username, viewerChanges)
 
 {- The Api module controls external communications.
 
@@ -6,11 +6,14 @@ port module Api exposing (Credential(..), login, logout, storeCredential, userna
 
 -}
 
+import Browser
+import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode exposing (Value)
 import Tokens exposing (Tokens)
+import Url exposing (Url)
 import Username exposing (Username(..))
 
 
@@ -97,3 +100,37 @@ decoderFromCredential decoder =
     Decode.map2 (\fromCredential cred -> fromCredential cred)
         decoder
         credentialDecoder
+
+
+application :
+    Decoder (Credential -> viewer)
+    ->
+        { init : Maybe viewer -> Url -> Nav.Key -> ( model, Cmd msg )
+        , update : msg -> model -> ( model, Cmd msg )
+        , view : model -> Browser.Document msg
+        , subscriptions : model -> Sub msg
+        , onUrlChange : Url -> msg
+        , onUrlRequest : Browser.UrlRequest -> msg
+        }
+    -> Program Value model msg
+application viewerDecoder config =
+    let
+        init flags url navKey =
+            let
+                maybeViewer =
+                    Decode.decodeValue Decode.string flags
+                        |> Result.andThen (Decode.decodeString (storageDecoder viewerDecoder))
+                        |> Result.toMaybe
+            in
+            config.init (Debug.log "maybeViewer" maybeViewer)
+                (Debug.log "url" url)
+                (Debug.log "navKey" navKey)
+    in
+    Browser.application
+        { init = init
+        , update = config.update
+        , view = config.view
+        , subscriptions = config.subscriptions
+        , onUrlChange = config.onUrlChange
+        , onUrlRequest = config.onUrlRequest
+        }
