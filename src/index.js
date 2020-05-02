@@ -33,3 +33,10 @@ app.ports.storeCache.subscribe(function (val) {
     }, 0);
 });
 
+
+window.addEventListener("storage", function(evt) {
+    if (evt.storageArea === localStorage && evt.key === storageKey ) {
+	app.ports.onStoreChange.send(evt.newValue);
+    }
+}, false);
+

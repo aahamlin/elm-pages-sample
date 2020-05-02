@@ -1,7 +1,7 @@
 module Page.Login exposing (..)
 
 import Api exposing (Credential)
-import Html exposing (Html, br, button, div, h1, text)
+import Html exposing (Html, br, button, div, h1, p, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Route exposing (Route)
@@ -13,13 +13,15 @@ import Viewer exposing (Viewer(..))
 type alias Model =
     { session : Session
     , problems : String
+    , returnRoute : Route
     }
 
 
-init : Session -> ( Model, Cmd Msg )
-init session =
+init : Session -> Maybe Route -> String -> ( Model, Cmd Msg )
+init session maybeRoute errorMessage =
     ( { session = session
-      , problems = ""
+      , problems = errorMessage
+      , returnRoute = Maybe.withDefault Route.Home maybeRoute
       }
     , Cmd.none
     )
@@ -38,6 +40,7 @@ view model =
         div []
             [ div [ class "container my-md-4" ]
                 [ h1 [] [ text "Login content" ]
+                , p [ class "text-danger" ] [ text model.problems ]
                 , button [ class "btn btn-primary btn-lg", onClick DoLogin ] [ text "Login" ]
                 ]
             ]
@@ -76,8 +79,7 @@ update msg model =
 
         GotSession session ->
             ( { model | session = session }
-              -- every subpage that should redirect to home when sessions change
-            , Route.replaceUrl (Session.navKey session) Route.Home
+            , Route.replaceUrl (Session.navKey session) model.returnRoute
             )
 
 

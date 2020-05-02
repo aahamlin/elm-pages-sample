@@ -4,10 +4,13 @@ import Html exposing (Html, div, h1, p, text)
 import Html.Attributes exposing (class)
 import Route exposing (Route(..))
 import Session exposing (Session)
+import Strings
 
 
 type alias Model =
     { session : Session
+    , errorMessage : String
+    , returnRoute : Maybe Route
     }
 
 
@@ -31,14 +34,18 @@ init session =
     case maybeViewer of
         Just _ ->
             ( { session = session
+              , errorMessage = ""
+              , returnRoute = Nothing
               }
             , Cmd.none
             )
 
         Nothing ->
             ( { session = session
+              , errorMessage = Strings.unauthorizedError
+              , returnRoute = Just Route.Settings
               }
-            , Route.replaceUrl (Session.navKey session) Route.Home
+            , Route.replaceUrl (Session.navKey session) Route.Login
             )
 
 

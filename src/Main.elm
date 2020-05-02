@@ -10,18 +10,10 @@ import Page.Home as Home
 import Page.Login as Login
 import Page.NotFound as NotFound
 import Page.Settings as Settings
-import Route exposing (Route)
+import Route exposing (Route(..))
 import Session exposing (Session)
 import Url exposing (Url)
 import Viewer exposing (Viewer)
-
-
-
---import Viewer exposing (Viewer)
-{- Sample of basic navigation in Elm.
-
-   The first argument is currently empty until we decode the flags from Json.Value
--}
 
 
 main : Program Value AppModel AppMsg
@@ -38,6 +30,7 @@ main =
 
 
 -- every model argument *must* contain a session property
+-- read about the record type that adds properties
 
 
 type AppModel
@@ -51,14 +44,10 @@ type AppModel
 type AppMsg
     = UrlChanged Url
     | LinkClicked UrlRequest
-    | GoToHome Home.Msg
-    | GoToLogin Login.Msg
-    | GoToSettings Settings.Msg
+    | GotHomeMsg Home.Msg
+    | GotLoginMsg Login.Msg
+    | GotSettingsMsg Settings.Msg
     | GotSession Session
-
-
-
--- first argument to init will be Value and then Maybe User
 
 
 init : Maybe Viewer -> Url -> Nav.Key -> ( AppModel, Cmd AppMsg )
@@ -82,7 +71,7 @@ view model =
             , body = List.map (Html.map toMsg) body
             }
     in
-    case Debug.log "view" model of
+    case Debug.log "Main.view" model of
         Redirect _ ->
             Page.view viewer Page.Other NotFound.view
 
@@ -90,13 +79,13 @@ view model =
             Page.view viewer Page.Other NotFound.view
 
         Home home ->
-            viewPage Page.Home GoToHome (Home.view home)
+            viewPage Page.Home GotHomeMsg (Home.view home)
 
         Login login ->
-            viewPage Page.Login GoToLogin (Login.view login)
+            viewPage Page.Login GotLoginMsg (Login.view login)
 
         Settings settings ->
-            viewPage Page.Settings GoToSettings (Settings.view settings)
+            viewPage Page.Settings GotSettingsMsg (Settings.view settings)
 
 
 update : AppMsg -> AppModel -> ( AppModel, Cmd AppMsg )
@@ -117,17 +106,17 @@ update msg model =
         ( UrlChanged url, _ ) ->
             changeRouteTo (Route.fromUrl url) model
 
-        ( GoToHome subMsg, Home home ) ->
+        ( GotHomeMsg subMsg, Home home ) ->
             Home.update subMsg home
-                |> updateWith Home GoToHome
+                |> updateWith Home GotHomeMsg
 
-        ( GoToLogin subMsg, Login login ) ->
+        ( GotLoginMsg subMsg, Login login ) ->
             Login.update subMsg login
-                |> updateWith Login GoToLogin
+                |> updateWith Login GotLoginMsg
 
-        ( GoToSettings subMsg, Settings settings ) ->
+        ( GotSettingsMsg subMsg, Settings settings ) ->
             Settings.update subMsg settings
-                |> updateWith Settings GoToSettings
+                |> updateWith Settings GotSettingsMsg
 
         ( GotSession session, _ ) ->
             ( Redirect session
@@ -136,14 +125,35 @@ update msg model =
 
         ( _, _ ) ->
             -- Catch all case that should never happen, throw err?
-            ( model, Cmd.none )
+            let
+                session =
+                    toSession model
+            in
+            ( NotFound session, Cmd.none )
+
+
+
+{- Dispatch updates to pages.
+
+   Args
+   1. 'subModel' is one of AppModel custom type
+   2. 'subMsg' is one of AppMsg custom type
+   3. '( subModel, subCmd )' is a function that returns a subModel and subCmd msg
+
+   For example, Login.elm:
+   1. subModel from AppModel = Login Login.Model
+   2. subMsg from AppMsg = GotLoginMsg Login.Msg
+   3. Login.update signature : Login.Msg -> Login.Model -> ( Login.Model, Cmd Login.Msg ), where the dispatcher provides the Login.Msg and Login.Model values and wraps the output in the AppModel/AppMsg types
+
+-}
 
 
 updateWith : (subModel -> AppModel) -> (subMsg -> AppMsg) -> ( subModel, Cmd subMsg ) -> ( AppModel, Cmd AppMsg )
 updateWith toModel toMsg ( subModel, subCmd ) =
-    ( toModel subModel
-    , Cmd.map toMsg subCmd
-    )
+    Debug.log "Main.updateWith" <|
+        ( toModel subModel
+        , Cmd.map toMsg subCmd
+        )
 
 
 
@@ -160,13 +170,13 @@ subscriptions model =
             Session.changes GotSession (Session.navKey (toSession model))
 
         Home home ->
-            Sub.map GoToHome (Home.subscriptions home)
+            Sub.map GotHomeMsg (Home.subscriptions home)
 
         Login login ->
-            Sub.map GoToLogin (Login.subscriptions login)
+            Sub.map GotLoginMsg (Login.subscriptions login)
 
         Settings settings ->
-            Sub.map GoToSettings (Settings.subscriptions settings)
+            Sub.map GotSettingsMsg (Settings.subscriptions settings)
 
 
 
@@ -192,11 +202,35 @@ toSession model =
             m.session
 
 
+toReturnRoute : AppModel -> Maybe Route
+toReturnRoute model =
+    case model of
+        Settings m ->
+            m.returnRoute
+
+        _ ->
+            Nothing
+
+
+toErrorMessage : AppModel -> String
+toErrorMessage model =
+    case model of
+        Settings m ->
+            m.errorMessage
+
+        _ ->
+            ""
+
+
 changeRouteTo : Maybe Route -> AppModel -> ( AppModel, Cmd AppMsg )
 changeRouteTo maybeRoute model =
     let
         session =
             toSession model
+
+        log =
+            Debug.toString model
+                |> Debug.log "changeRouteTo model: "
     in
     case Debug.log "changeRouteTo" maybeRoute of
         Just Route.Root ->
@@ -208,15 +242,22 @@ changeRouteTo maybeRoute model =
 
         Just Route.Home ->
             Home.init session
-                |> updateWith Home GoToHome
+                |> updateWith Home GotHomeMsg
 
         Just Route.Login ->
-            Login.init session
-                |> updateWith Login GoToLogin
+            let
+                returnRoute =
+                    toReturnRoute model
+
+                errorMessage =
+                    toErrorMessage model
+            in
+            Login.init session returnRoute errorMessage
+                |> updateWith Login GotLoginMsg
 
         Just Route.Settings ->
             Settings.init session
-                |> updateWith Settings GoToSettings
+                |> updateWith Settings GotSettingsMsg
 
         Just Route.Logout ->
             ( model, Api.logout )

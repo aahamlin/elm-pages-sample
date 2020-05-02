@@ -37,7 +37,6 @@ viewerChanges toMsg decoder =
 decodeFromChange : Decoder (Credential -> viewer) -> Value -> Maybe viewer
 decodeFromChange viewerDecoder val =
     Decode.decodeValue (storageDecoder viewerDecoder) val
-        |> Debug.log "Api.decodeFromChange"
         |> Result.toMaybe
 
 
@@ -84,7 +83,7 @@ storeCredential (Credential uname tokens) =
 
 logout : Cmd msg
 logout =
-    Debug.log "logout" storeCache Nothing
+    storeCache Nothing
 
 
 port storeCache : Maybe Value -> Cmd msg
@@ -122,9 +121,7 @@ application viewerDecoder config =
                         |> Result.andThen (Decode.decodeString (storageDecoder viewerDecoder))
                         |> Result.toMaybe
             in
-            config.init (Debug.log "maybeViewer" maybeViewer)
-                (Debug.log "url" url)
-                (Debug.log "navKey" navKey)
+            config.init maybeViewer url navKey
     in
     Browser.application
         { init = init
