@@ -1,7 +1,8 @@
 module Page.Login exposing (..)
 
 import Api exposing (Credential)
-import Html exposing (Html, br, button, div, text)
+import Html exposing (Html, br, button, div, h1, text)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Route exposing (Route)
 import Session exposing (Session)
@@ -35,11 +36,10 @@ view model =
     { title = "Login"
     , content =
         div []
-            [ div [] [ text "Login content" ]
-            , br [] []
-            , button
-                [ onClick DoLogin ]
-                [ text "Login" ]
+            [ div [ class "container my-md-4" ]
+                [ h1 [] [ text "Login content" ]
+                , button [ class "btn btn-primary btn-lg", onClick DoLogin ] [ text "Login" ]
+                ]
             ]
     }
 

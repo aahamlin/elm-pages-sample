@@ -1,6 +1,7 @@
 module Page.Settings exposing (..)
 
-import Html exposing (Html, div, text)
+import Html exposing (Html, div, h1, p, text)
+import Html.Attributes exposing (class)
 import Route exposing (Route(..))
 import Session exposing (Session)
 
@@ -49,7 +50,12 @@ view : Model -> { title : String, content : Html msg }
 view model =
     { title = "Settings"
     , content =
-        div [] [ text "Settings content" ]
+        div []
+            [ div [ class "container my-md-4" ]
+                [ h1 [] [ text "Settings content" ]
+                , p [] [ text "fill in user settings page" ]
+                ]
+            ]
     }
 
 

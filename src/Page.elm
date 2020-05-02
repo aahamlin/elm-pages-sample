@@ -1,7 +1,7 @@
 module Page exposing (..)
 
 import Browser exposing (Document)
-import Html exposing (Html, a, div, footer, i, li, nav, text, ul)
+import Html exposing (Html, a, div, footer, h1, hr, i, li, nav, p, small, span, text, ul)
 import Html.Attributes exposing (class, classList, href, style)
 import Route exposing (Route)
 import Viewer exposing (Viewer)
@@ -17,17 +17,22 @@ type Page
 view : Maybe Viewer -> Page -> { title : String, content : Html msg } -> Document msg
 view maybeViewer page { title, content } =
     { title = title ++ " - Pages Sample"
-    , body = viewHeader page maybeViewer :: content :: [ viewFooter ]
+    , body =
+        viewHeader page maybeViewer
+            :: content
+            :: [ viewFooter ]
     }
 
 
 viewHeader : Page -> Maybe Viewer -> Html msg
 viewHeader page maybeViewer =
-    nav [ class "navbar navbar-light" ]
+    nav [ class "navbar navbar-dark bg-primary navbar-expand-sm" ]
         [ div [ class "container" ]
-            [ a [ class "navbar-brand", Route.href Route.Home ]
-                [ text "Pages Sample" ]
-            , ul [ class "nav navbar-nav pull-xs-right" ] <|
+            [ div [ class "navbar-header" ]
+                [ a [ class "navbar-brand", Route.href Route.Home ]
+                    [ text "Pages" ]
+                ]
+            , ul [ class "nav navbar-nav navbar-right" ] <|
                 navbarLink page Route.Home [ text "Home" ]
                     :: viewMenu page maybeViewer
             ]
@@ -36,8 +41,16 @@ viewHeader page maybeViewer =
 
 viewFooter : Html msg
 viewFooter =
-    footer []
-        [ div [] [ text "viewFooter" ]
+    div [ class "container" ]
+        [ hr [ class "bg-secondary" ] []
+        , p []
+            [ small []
+                [ text "A sample of page navigation, based on "
+                , a [ href "https://github.com/rtfeldman/elm-spa-example" ]
+                    [ text "elm-spa-example" ]
+                , text ". Code & design licensed under MIT."
+                ]
+            ]
         ]
 
 
@@ -53,7 +66,7 @@ viewMenu page maybeViewer =
                 username =
                     Viewer.username user
             in
-            [ linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text "\u{00A0}Settings" ]
+            [ linkTo Route.Settings [ text "Settings" ]
             , linkTo Route.Logout [ text "Sign out" ]
             ]
 
@@ -64,5 +77,21 @@ viewMenu page maybeViewer =
 
 navbarLink : Page -> Route -> List (Html msg) -> Html msg
 navbarLink page route linkContent =
-    li []
+    li [ classList [ ( "nav-item", True ), ( "active", isActive page route ) ] ]
         [ a [ class "nav-link", Route.href route ] linkContent ]
+
+
+isActive : Page -> Route -> Bool
+isActive page route =
+    case ( page, route ) of
+        ( Home, Route.Home ) ->
+            True
+
+        ( Login, Route.Login ) ->
+            True
+
+        ( Settings, Route.Settings ) ->
+            True
+
+        _ ->
+            False
