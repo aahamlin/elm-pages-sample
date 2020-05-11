@@ -1,5 +1,6 @@
-module Username exposing (Username(..), decoder, encode, toString)
+module Username exposing (Username(..), decoder, encode, toHtml, toString)
 
+import Html exposing (Html)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode exposing (Value)
 
@@ -21,3 +22,8 @@ encode (Username uname) =
 toString : Username -> String
 toString (Username name) =
     name
+
+
+toHtml : Username -> Html msg
+toHtml (Username name) =
+    Html.text name

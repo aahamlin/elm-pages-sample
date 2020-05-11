@@ -1,7 +1,7 @@
 module Page.Login exposing (..)
 
 import Api exposing (Credential)
-import Html exposing (Html, br, button, div, h1, p, text)
+import Html exposing (Html, br, button, div, h1, h2, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Route exposing (Route)
@@ -13,15 +13,15 @@ import Viewer exposing (Viewer(..))
 type alias Model =
     { session : Session
     , problems : String
-    , returnRoute : Route
+    , returnRoute : Maybe Route
     }
 
 
-init : Session -> Maybe Route -> String -> ( Model, Cmd Msg )
-init session maybeRoute errorMessage =
+init : Session -> Maybe Route -> ( Model, Cmd Msg )
+init session maybeRoute =
     ( { session = session
-      , problems = errorMessage
-      , returnRoute = Maybe.withDefault Route.Home maybeRoute
+      , problems = ""
+      , returnRoute = maybeRoute
       }
     , Cmd.none
     )
@@ -35,12 +35,21 @@ type Msg
 
 view : Model -> { title : String, content : Html Msg }
 view model =
+    let
+        redirectMsg =
+            case model.returnRoute of
+                Just _ ->
+                    h2 [ class "text-danger" ] [ text "Please login to view this page." ]
+
+                Nothing ->
+                    text ""
+    in
     { title = "Login"
     , content =
         div []
             [ div [ class "container my-md-4" ]
                 [ h1 [] [ text "Login content" ]
-                , p [ class "text-danger" ] [ text model.problems ]
+                , redirectMsg
                 , button [ class "btn btn-primary btn-lg", onClick DoLogin ] [ text "Login" ]
                 ]
             ]
@@ -59,7 +68,7 @@ fakeLogin usernameVal =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case Debug.log "Login.update" msg of
+    case msg of
         DoLogin ->
             ( model
               -- elm/task seems to be the necessary magic to fake a login
@@ -79,7 +88,7 @@ update msg model =
 
         GotSession session ->
             ( { model | session = session }
-            , Route.replaceUrl (Session.navKey session) model.returnRoute
+            , Route.replaceUrl (Session.navKey session) (Maybe.withDefault Route.Home model.returnRoute)
             )
 
 

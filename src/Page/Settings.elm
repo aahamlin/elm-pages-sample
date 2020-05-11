@@ -1,6 +1,6 @@
 module Page.Settings exposing (..)
 
-import Html exposing (Html, div, h1, p, text)
+import Html exposing (Html, a, div, h1, p, text)
 import Html.Attributes exposing (class)
 import Route exposing (Route(..))
 import Session exposing (Session)
@@ -9,8 +9,6 @@ import Strings
 
 type alias Model =
     { session : Session
-    , errorMessage : String
-    , returnRoute : Maybe Route
     }
 
 
@@ -27,26 +25,7 @@ type alias Model =
 
 init : Session -> ( Model, Cmd Msg )
 init session =
-    let
-        maybeViewer =
-            Session.viewer session
-    in
-    case maybeViewer of
-        Just _ ->
-            ( { session = session
-              , errorMessage = ""
-              , returnRoute = Nothing
-              }
-            , Cmd.none
-            )
-
-        Nothing ->
-            ( { session = session
-              , errorMessage = Strings.unauthorizedError
-              , returnRoute = Just Route.Settings
-              }
-            , Route.replaceUrl (Session.navKey session) Route.Login
-            )
+    ( { session = session }, Cmd.none )
 
 
 type Msg
@@ -68,8 +47,8 @@ view model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case Debug.log "Settings.update" ( msg, model ) of
-        ( GotSession session, _ ) ->
+    case msg of
+        GotSession session ->
             ( { model | session = session }
             , Route.replaceUrl (Session.navKey session) Route.Home
             )

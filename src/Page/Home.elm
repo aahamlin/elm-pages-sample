@@ -36,8 +36,8 @@ view model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model ) of
-        ( GotSession session, _ ) ->
+    case msg of
+        GotSession session ->
             ( { model | session = session }
             , Route.replaceUrl (Session.navKey session) Route.Home
             )

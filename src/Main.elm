@@ -59,24 +59,24 @@ init maybeViewer url navKey =
 view : AppModel -> Document AppMsg
 view model =
     let
-        viewer =
+        maybeViewer =
             Session.viewer (toSession model)
 
         viewPage page toMsg config =
             let
                 { title, body } =
-                    Page.view viewer page config
+                    Page.view maybeViewer page config
             in
             { title = title
             , body = List.map (Html.map toMsg) body
             }
     in
-    case Debug.log "Main.view" model of
+    case model of
         Redirect _ ->
-            Page.view viewer Page.Other NotFound.view
+            Page.view maybeViewer Page.Other NotFound.view
 
         NotFound _ ->
-            Page.view viewer Page.Other NotFound.view
+            Page.view maybeViewer Page.Other NotFound.view
 
         Home home ->
             viewPage Page.Home GotHomeMsg (Home.view home)
@@ -90,7 +90,7 @@ view model =
 
 update : AppMsg -> AppModel -> ( AppModel, Cmd AppMsg )
 update msg model =
-    case Debug.log "Main.update" ( msg, model ) of
+    case ( msg, model ) of
         ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
@@ -150,10 +150,9 @@ update msg model =
 
 updateWith : (subModel -> AppModel) -> (subMsg -> AppMsg) -> ( subModel, Cmd subMsg ) -> ( AppModel, Cmd AppMsg )
 updateWith toModel toMsg ( subModel, subCmd ) =
-    Debug.log "Main.updateWith" <|
-        ( toModel subModel
-        , Cmd.map toMsg subCmd
-        )
+    ( toModel subModel
+    , Cmd.map toMsg subCmd
+    )
 
 
 
@@ -162,7 +161,7 @@ updateWith toModel toMsg ( subModel, subCmd ) =
 
 subscriptions : AppModel -> Sub AppMsg
 subscriptions model =
-    case Debug.log "Main.sub" model of
+    case model of
         NotFound _ ->
             Sub.none
 
@@ -202,65 +201,42 @@ toSession model =
             m.session
 
 
-toReturnRoute : AppModel -> Maybe Route
-toReturnRoute model =
-    case model of
-        Settings m ->
-            m.returnRoute
-
-        _ ->
-            Nothing
-
-
-toErrorMessage : AppModel -> String
-toErrorMessage model =
-    case model of
-        Settings m ->
-            m.errorMessage
-
-        _ ->
-            ""
-
-
 changeRouteTo : Maybe Route -> AppModel -> ( AppModel, Cmd AppMsg )
 changeRouteTo maybeRoute model =
     let
         session =
             toSession model
 
-        log =
-            Debug.toString model
-                |> Debug.log "changeRouteTo model: "
+        -- protected routes redirect to login, if there is not a Viewer
+        maybeViewer =
+            Session.viewer session
     in
-    case Debug.log "changeRouteTo" maybeRoute of
-        Just Route.Root ->
+    case ( maybeRoute, maybeViewer ) of
+        ( Just Route.Root, _ ) ->
             ( model
             , Route.replaceUrl
                 (Session.navKey session)
                 Route.Home
             )
 
-        Just Route.Home ->
+        ( Just Route.Home, _ ) ->
             Home.init session
                 |> updateWith Home GotHomeMsg
 
-        Just Route.Login ->
-            let
-                returnRoute =
-                    toReturnRoute model
-
-                errorMessage =
-                    toErrorMessage model
-            in
-            Login.init session returnRoute errorMessage
+        ( Just Route.Login, _ ) ->
+            Login.init session Nothing
                 |> updateWith Login GotLoginMsg
 
-        Just Route.Settings ->
+        ( Just Route.Logout, _ ) ->
+            ( model, Api.logout )
+
+        ( Just Route.Settings, Just _ ) ->
             Settings.init session
                 |> updateWith Settings GotSettingsMsg
 
-        Just Route.Logout ->
-            ( model, Api.logout )
+        ( Just Route.Settings, Nothing ) ->
+            Login.init session (Just Route.Settings)
+                |> updateWith Login GotLoginMsg
 
-        Nothing ->
+        ( Nothing, _ ) ->
             ( NotFound session, Cmd.none )

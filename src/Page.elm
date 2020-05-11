@@ -4,6 +4,7 @@ import Browser exposing (Document)
 import Html exposing (Html, a, div, footer, h1, hr, i, li, nav, p, small, span, text, ul)
 import Html.Attributes exposing (class, classList, href, style)
 import Route exposing (Route)
+import Username exposing (Username)
 import Viewer exposing (Viewer)
 
 
@@ -61,11 +62,7 @@ viewMenu page maybeViewer =
             navbarLink page
     in
     case maybeViewer of
-        Just user ->
-            let
-                username =
-                    Viewer.username user
-            in
+        Just _ ->
             [ linkTo Route.Settings [ text "Settings" ]
             , linkTo Route.Logout [ text "Sign out" ]
             ]
