@@ -3,9 +3,9 @@ Simple page navigation sample
 Demonstrates the following scenarios in these commits
 - 7b7be86 page routing, e.g. '#/login'
 - 1d704b5 credential caching, JSON encoding & decoding, localStorage
-- 8a055a6 protected pages, e.g. '#/settings'
 - a3f88f2 load cached credentials via flags
 - 61f6998 add returnMessage and multi-tab support via windows eventListener
+- 10df9a6 protected routes, e.g. '#/settings'
 
 Made it look nicer with bare bones UI
 - ec1a803 theme w/ bootstrap 4.3
